@@ -135,8 +135,8 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
 
         return Address(
             url.host, url.port, client.dns, client.socketFactory,
-            sslSocketFactory, hostnameVerifier,  client.proxyAuthenticator,
-            client.proxy, client.protocols, client.connectionSpecs, client.proxySelector
+            sslSocketFactory, hostnameVerifier,
+            client.protocols, client.connectionSpecs
         )
     }
 

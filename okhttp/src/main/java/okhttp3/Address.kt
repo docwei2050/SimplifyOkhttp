@@ -46,23 +46,9 @@ class Address(
   /** Returns the hostname verifier, or null if this is not an HTTPS address. */
   @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier?,
 
-  /** Returns the client's proxy authenticator. */
-  @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator,
-
-  /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
-   * #proxySelector proxy selector}.
-   */
-  @get:JvmName("proxy") val proxy: Proxy?,
-
   protocols: List<Protocol>,
-  connectionSpecs: List<ConnectionSpec>,
+  connectionSpecs: List<ConnectionSpec>
 
-  /**
-   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
-   * selector's proxies are reachable, a direct connection will be attempted.
-   */
-  @get:JvmName("proxySelector") val proxySelector: ProxySelector
 ) {
   /**
    * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
@@ -93,11 +79,9 @@ class Address(
     var result = 17
     result = 31 * result + url.hashCode()
     result = 31 * result + dns.hashCode()
-    result = 31 * result + proxyAuthenticator.hashCode()
+
     result = 31 * result + protocols.hashCode()
     result = 31 * result + connectionSpecs.hashCode()
-    result = 31 * result + proxySelector.hashCode()
-    result = 31 * result + Objects.hashCode(proxy)
     result = 31 * result + Objects.hashCode(sslSocketFactory)
     result = 31 * result + Objects.hashCode(hostnameVerifier)
     return result
@@ -105,11 +89,9 @@ class Address(
 
   internal fun equalsNonHost(that: Address): Boolean {
     return this.dns == that.dns &&
-        this.proxyAuthenticator == that.proxyAuthenticator &&
+
         this.protocols == that.protocols &&
         this.connectionSpecs == that.connectionSpecs &&
-        this.proxySelector == that.proxySelector &&
-        this.proxy == that.proxy &&
         this.sslSocketFactory == that.sslSocketFactory &&
         this.hostnameVerifier == that.hostnameVerifier &&
         this.url.port == that.url.port
@@ -117,8 +99,6 @@ class Address(
 
   override fun toString(): String {
     return "Address{" +
-        "${url.host}:${url.port}, " +
-        (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
-        "}"
+        "${url.host}:${url.port}, "
   }
 }

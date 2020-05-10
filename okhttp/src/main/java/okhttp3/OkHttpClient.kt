@@ -170,20 +170,6 @@ open class OkHttpClient internal constructor(
   @get:JvmName("dns")
   val dns: Dns = builder.dns
 
-  @get:JvmName("proxy")
-  val proxy: Proxy? = builder.proxy
-
-  @get:JvmName("proxySelector")
-  val proxySelector: ProxySelector =
-      when {
-        // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
-        builder.proxy != null -> NullProxySelector
-        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
-      }
-
-  @get:JvmName("proxyAuthenticator")
-  val proxyAuthenticator: Authenticator =
-      builder.proxyAuthenticator
 
   @get:JvmName("socketFactory")
   val socketFactory: SocketFactory = builder.socketFactory
@@ -314,9 +300,6 @@ open class OkHttpClient internal constructor(
       this.cookieJar = okHttpClient.cookieJar
 
       this.dns = okHttpClient.dns
-      this.proxy = okHttpClient.proxy
-      this.proxySelector = okHttpClient.proxySelector
-      this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
       this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactoryOrNull
       this.x509TrustManagerOrNull = okHttpClient.x509TrustManager

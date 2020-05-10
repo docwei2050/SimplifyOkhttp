@@ -50,7 +50,7 @@ class RouteSelector(
   private val postponedRoutes = mutableListOf<Route>()
 
   init {
-    resetNextProxy(address.url, address.proxy)
+    resetNextProxy(address.url)
   }
 
   /**
@@ -93,20 +93,9 @@ class RouteSelector(
   }
 
   /** Prepares the proxy servers to try. */
-  private fun resetNextProxy(url: HttpUrl, proxy: Proxy?) {
+  private fun resetNextProxy(url: HttpUrl) {
     eventListener.proxySelectStart(call, url)
-    proxies = if (proxy != null) {
-      // If the user specifies a proxy, try that and only that.
-      listOf(proxy)
-    } else {
-      // Try each of the ProxySelector choices until one connection succeeds.
-      val proxiesOrNull = address.proxySelector.select(url.toUri())
-      if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
-        proxiesOrNull.toImmutableList()
-      } else {
-        immutableListOf(Proxy.NO_PROXY)
-      }
-    }
+    proxies =immutableListOf(Proxy.NO_PROXY)
     nextProxyIndex = 0
     eventListener.proxySelectEnd(call, url, proxies)
   }

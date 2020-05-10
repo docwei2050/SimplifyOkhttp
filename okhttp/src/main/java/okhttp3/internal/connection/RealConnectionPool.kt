@@ -237,12 +237,6 @@ class RealConnectionPool(
   /** Track a bad route in the route database. Other routes will be attempted first. */
   fun connectFailed(failedRoute: Route, failure: IOException) {
     // Tell the proxy selector when we fail to connect on a fresh connection.
-    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
-      val address = failedRoute.address
-      address.proxySelector.connectFailed(
-          address.url.toUri(), failedRoute.proxy.address(), failure)
-    }
-
     routeDatabase.failed(failedRoute)
   }
 
