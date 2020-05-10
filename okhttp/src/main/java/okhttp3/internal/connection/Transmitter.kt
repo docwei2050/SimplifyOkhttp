@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import android.util.Log
 import okhttp3.*
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.canReuseConnectionFor
@@ -39,9 +40,14 @@ import javax.net.ssl.SSLSocketFactory
  * the other streams sharing its connection. But if the TLS handshake is still in progress then
  * canceling may break the entire connection.
  */
+//确实，，连接okhttpClient和connection的桥梁
+//超时判断
+
 class Transmitter(private val client: OkHttpClient, private val call: Call) {
+    //唯一一个连接池
     private val connectionPool: RealConnectionPool = client.connectionPool.delegate
     private val eventListener: EventListener = client.eventListenerFactory.create(call)
+
     private val timeout = object : AsyncTimeout() {
         override fun timedOut() {
             cancel()
@@ -107,7 +113,10 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
      * it exists.
      */
     fun prepareToConnect(request: Request) {
-        if (this.request != null) {
+      /*  if (this.request != null) {
+            Log.e("okhttp","this.request!!.url.canReuseConnectionFor(request.url)-->"+this.request!!.url.canReuseConnectionFor(request.url))
+            Log.e("okhttp","exchangeFinder!!.hasRouteToTry()-->"+exchangeFinder!!.hasRouteToTry())
+
             if (this.request!!.url.canReuseConnectionFor(request.url) && exchangeFinder!!.hasRouteToTry()) {
                 return // Already ready.
             }
@@ -117,11 +126,11 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
                 maybeReleaseConnection(null, true)
                 exchangeFinder = null
             }
-        }
+        }*/
 
         this.request = request
-        this.exchangeFinder = ExchangeFinder(
-            this, connectionPool, createAddress(request.url), call, eventListener
+        //创建一个新的exchangeFinder
+        this.exchangeFinder = ExchangeFinder(this, connectionPool, createAddress(request.url), call, eventListener
         )
     }
 
@@ -166,6 +175,7 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
 
         check(this.connection == null)
         this.connection = connection
+        //连接找到了就把这个transimitter加入这个连接的弱引用集合里面，，用于判断这个连接是在用还是空闲用
         connection.transmitters.add(TransmitterReference(this, callStackTrace))
     }
 
@@ -323,13 +333,11 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
         exchangeToCancel?.cancel() ?: connectionToCancel?.cancel()
     }
   //弱引用啊啊啊啊，，去获取被标记的
-    internal class TransmitterReference(
-        referent: Transmitter,
+    internal class TransmitterReference(referent: Transmitter,
         /**
          * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
          * identifying the origin of connection leaks.
          */
-
         val callStackTrace: Any?
     ) : WeakReference<Transmitter>(referent)
 }

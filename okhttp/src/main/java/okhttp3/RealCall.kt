@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import android.util.Log
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.ConnectInterceptor
@@ -132,6 +133,7 @@ internal class RealCall private constructor(
    //真正执行请求的地方
     override fun run() {
       threadName("OkHttp ${redactedUrl()}") {
+        Log.e("okhttp","ReadCall 线程池"+Thread.currentThread().name)
         var signalledCallback = false
         transmitter.timeoutEnter()
         try {

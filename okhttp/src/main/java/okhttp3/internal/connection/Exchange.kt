@@ -60,6 +60,7 @@ class Exchange(
       eventListener.requestHeadersEnd(call, request)
     } catch (e: IOException) {
       eventListener.requestFailed(call, e)
+      //在读写的时候，发现出错了就认定route有问题
       trackFailure(e)
       throw e
     }

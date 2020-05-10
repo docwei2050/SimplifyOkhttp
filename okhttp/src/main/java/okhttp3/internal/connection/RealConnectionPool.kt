@@ -38,9 +38,11 @@ class RealConnectionPool(
   keepAliveDuration: Long,
   timeUnit: TimeUnit
 ) {
+  //保活时间是5分钟
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
-
+  //清空连接的队列
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
+  //清空任务
   private val cleanupTask = object : Task("OkHttp ConnectionPool") {
     override fun runOnce() = cleanup(System.nanoTime())
   }
@@ -54,6 +56,7 @@ class RealConnectionPool(
   }
 
   @Synchronized fun idleConnectionCount(): Int {
+    //就是判断这个连接携带的请求数
     return connections.count { it.transmitters.isEmpty() }
   }
 
@@ -69,8 +72,7 @@ class RealConnectionPool(
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
-  fun transmitterAcquirePooledConnection(
-    address: Address,
+  fun transmitterAcquirePooledConnection(address: Address,
     transmitter: Transmitter,
     routes: List<Route>?,
     requireMultiplexed: Boolean
@@ -78,8 +80,11 @@ class RealConnectionPool(
     this.assertThreadHoldsLock()
 
     for (connection in connections) {
+      //需要多路复用 但是连接不支持多路复用
       if (requireMultiplexed && !connection.isMultiplexed) continue
+      //连接host不一致
       if (!connection.isEligible(address, routes)) continue
+      //那就最后找到了合适的连接
       transmitter.acquireConnectionNoEvents(connection)
       return true
     }
@@ -88,7 +93,7 @@ class RealConnectionPool(
 
   fun put(connection: RealConnection) {
     this.assertThreadHoldsLock()
-
+   //每次添加连接的时候都要做下清理的操作
     connections.add(connection)
     cleanupQueue.schedule(cleanupTask)
   }
@@ -148,11 +153,12 @@ class RealConnectionPool(
     synchronized(this) {
       for (connection in connections) {
         // If the connection is in use, keep searching.
+        //通过判断连接里面的tramistter集合数量是否为0
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
           continue
         }
-
+        //换到空闲
         idleConnectionCount++
 
         // If the connection is ready to be evicted, we're done.
@@ -204,6 +210,7 @@ class RealConnectionPool(
   private fun pruneAndGetAllocationCount(connection: RealConnection, now: Long): Int {
     //mutableListOf<Reference<Transmitter>>()
     //弱引用啊
+    //这个连接的请求有多少
     val references = connection.transmitters
     var i = 0
     while (i < references.size) {
@@ -214,7 +221,6 @@ class RealConnectionPool(
         i++
         continue
       }
-
       // We've discovered a leaked transmitter. This is an application bug.
       val transmitterRef = reference as TransmitterReference
       val message = "A connection to ${connection.route().address.url} was leaked. " +

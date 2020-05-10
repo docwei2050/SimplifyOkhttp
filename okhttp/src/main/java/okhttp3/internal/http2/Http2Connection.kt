@@ -516,7 +516,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   fun isHealthy(nowNs: Long): Boolean {
     if (isShutdown) return false
 
-    // A degraded pong is overdue.
+    // A degraded pong is overdue.    降级的pong
     if (degradedPongsReceived < degradedPingsSent && nowNs >= degradedPongDeadlineNs) return false
 
     return true
@@ -770,11 +770,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       // TODO: If we don't get this callback after sending settings to the peer, SETTINGS_TIMEOUT.
     }
 
-    override fun ping(
-      ack: Boolean,
-      payload1: Int,
-      payload2: Int
-    ) {
+    override fun ping(ack: Boolean, payload1: Int, payload2: Int) {
       if (ack) {
         synchronized(this@Http2Connection) {
           when (payload1) {

@@ -58,8 +58,8 @@ class ExchangeFinder(
   private var routeSelection: RouteSelector.Selection? = null
 
   // State guarded by connectionPool.
-  private val routeSelector: RouteSelector = RouteSelector(
-      address, connectionPool.routeDatabase, call, eventListener)
+  private val routeSelector: RouteSelector = RouteSelector(address, connectionPool.routeDatabase, call, eventListener)
+
   private var connectingConnection: RealConnection? = null
   private var hasStreamFailure = false
   private var nextRouteToTry: Route? = null
@@ -155,6 +155,7 @@ class ExchangeFinder(
       if (transmitter.isCanceled) throw IOException("Canceled")
       hasStreamFailure = false // This is a fresh attempt.
 
+      //
       releasedConnection = transmitter.connection
       toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
         transmitter.releaseConnectionNoEvents()
@@ -236,16 +237,16 @@ class ExchangeFinder(
 
     // Do TCP + TLS handshakes. This is a blocking operation.
     //复用连接池中的连接，还要重新进行Tls
-    result!!.connect(
-        connectTimeout,
-        readTimeout,
-        writeTimeout,
+    result!!.connect(connectTimeout, readTimeout, writeTimeout,
         pingIntervalMillis,
         connectionRetryEnabled,
         call,
         eventListener
     )
+    //记录成功的连接
     connectionPool.routeDatabase.connected(result!!.route())
+
+
 
     var socket: Socket? = null
     synchronized(connectionPool) {

@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import android.util.Log
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
@@ -208,7 +209,6 @@ open class OkHttpClient internal constructor(
         this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
         //证书里面也是用的根证书
         this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
-
         if (sslSocketFactoryOrNull != null) {
             Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
         }

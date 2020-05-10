@@ -7,10 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 import okhttp3.*
 import java.io.IOException
 import java.net.Proxy
+import java.util.concurrent.*
 
 class MainActivity : AppCompatActivity() {
     var client: OkHttpClient = OkHttpClient.Builder().eventListener(object : EventListener() {
-        override fun callStart(call: Call) {
+       /* override fun callStart(call: Call) {
             Log.e("okhttp", "callStart ")
         }
 
@@ -60,7 +61,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun secureConnectEnd(call: Call, handshake: Handshake?) {
             Log.e("okhttp", "secureConnectEnd")
-        }
+        }*/
 
     }).build()
 
@@ -68,6 +69,39 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
     }
+
+    private var executorServiceOrNull: ExecutorService? = null
+
+    @get:Synchronized
+    @get:JvmName("executorService")
+    val executorService: ExecutorService
+        get() {
+            if (executorServiceOrNull == null) {
+                executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+                    SynchronousQueue(), ThreadFactory { runnable ->
+                        Thread(runnable, "okhttp").apply {
+                            isDaemon = false
+                        }
+                    })
+            }
+            return executorServiceOrNull!!
+        }
+
+    fun clickSyn(view: View) {
+        for(i in 1..100){
+            executorService.execute(object : Runnable {
+                override fun run() {
+                    Log.e("okhttp", "thread.name--->" + Thread.currentThread().name)
+                    Thread.sleep(5000)
+
+                }
+            })
+        }
+    }
+
+
+
+
 
 
     fun click(view: View) {
@@ -88,16 +122,13 @@ class MainActivity : AppCompatActivity() {
                 Log.e("okhttp", response.toString())
             }
         })
-    }
-
-    fun clickSyn(view: View) {
-        val request: Request = Request.Builder()
-            .url("https://www.baidu.com/")
-            .build()
-        var response = client.newCall(request).execute();
-        if (response.isSuccessful) {
-            Log.e("okhttp", response.toString())
-        }
+        /* val request: Request = Request.Builder()
+                   .url("https://www.baidu.com/")
+                   .build()
+               var response = client.newCall(request).execute();
+               if (response.isSuccessful) {
+                   Log.e("okhttp", response.toString())
+               }*/
 
     }
 

@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.tls
 
+import android.util.Log
 import okhttp3.internal.canParseAsIpAddress
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
@@ -36,6 +37,7 @@ object OkHostnameVerifier : HostnameVerifier {
 
   override fun verify(host: String, session: SSLSession): Boolean {
     return try {
+      //Log.e("okhttp","session.peerCertificates[0]-->"+session.peerCertificates[0])
       verify(host, session.peerCertificates[0] as X509Certificate)
     } catch (_: SSLException) {
       false
