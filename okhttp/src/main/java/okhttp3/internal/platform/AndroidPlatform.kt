@@ -46,11 +46,7 @@ class AndroidPlatform : Platform() {
   private val closeGuard = CloseGuard.get()
 
   @Throws(IOException::class)
-  override fun connectSocket(
-    socket: Socket,
-    address: InetSocketAddress,
-    connectTimeout: Int
-  ) {
+  override fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
     try {
       socket.connect(address, connectTimeout)
     } catch (e: ClassCastException) {
@@ -68,10 +64,7 @@ class AndroidPlatform : Platform() {
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
           ?.trustManager(sslSocketFactory)
 
-  override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    protocols: List<@JvmSuppressWildcards Protocol>
-  ) {
+  override fun configureTlsExtensions(sslSocket: SSLSocket, protocols: List<@JvmSuppressWildcards Protocol>) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
         ?.configureTlsExtensions(sslSocket, protocols)

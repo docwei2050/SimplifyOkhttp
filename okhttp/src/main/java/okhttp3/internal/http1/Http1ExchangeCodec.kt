@@ -118,7 +118,7 @@ class Http1ExchangeCodec(
    */
   override fun writeRequestHeaders(request: Request) {
     val requestLine = RequestLine.get(
-        request, realConnection!!.route().proxy.type())
+        request)
     writeRequest(request.headers, requestLine)
   }
 

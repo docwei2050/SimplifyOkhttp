@@ -133,8 +133,7 @@ abstract class EventListener {
      */
     open fun connectStart(
         call: Call,
-        inetSocketAddress: InetSocketAddress,
-        proxy: Proxy
+        inetSocketAddress: InetSocketAddress
     ) {
     }
 
@@ -175,7 +174,6 @@ abstract class EventListener {
     open fun connectEnd(
         call: Call,
         inetSocketAddress: InetSocketAddress,
-        proxy: Proxy,
         protocol: Protocol?
     ) {
     }
@@ -190,7 +188,6 @@ abstract class EventListener {
     open fun connectFailed(
         call: Call,
         inetSocketAddress: InetSocketAddress,
-        proxy: Proxy,
         protocol: Protocol?,
         ioe: IOException
     ) {

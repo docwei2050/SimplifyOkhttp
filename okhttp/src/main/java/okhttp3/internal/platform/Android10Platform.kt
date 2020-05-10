@@ -61,7 +61,6 @@ class Android10Platform : Platform() {
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29
-
     fun buildIfSupported(): Platform? = if (isSupported) Android10Platform() else null
   }
 }

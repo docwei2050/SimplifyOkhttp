@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.connection
 
+import android.util.Log
 import okhttp3.*
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.internal.EMPTY_RESPONSE
@@ -124,29 +125,13 @@ class RealConnection(
     var routeException: RouteException? = null
     val connectionSpecs = route.address.connectionSpecs
     val connectionSpecSelector = ConnectionSpecSelector(connectionSpecs)
-    //明文传输
-    if (route.address.sslSocketFactory == null) {
-      if (ConnectionSpec.CLEARTEXT !in connectionSpecs) {
-        throw RouteException(UnknownServiceException(
-            "CLEARTEXT communication not enabled for client"))
-      }
-      val host = route.address.url.host
-      if (!Platform.get().isCleartextTrafficPermitted(host)) {
-        throw RouteException(UnknownServiceException(
-            "CLEARTEXT communication to $host not permitted by network security policy"))
-      }
-    } else {
-      if (Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols) {
-        throw RouteException(UnknownServiceException(
-            "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"))
-      }
-    }
+    //删除http明文传输的逻辑
 
     while (true) {
       try {
         connectSocket(connectTimeout, readTimeout, call, eventListener)
         establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener)
-        eventListener.connectEnd(call, route.socketAddress, route.proxy, protocol)
+        eventListener.connectEnd(call, route.socketAddress,  protocol)
         break
       } catch (e: IOException) {
         socket?.closeQuietly()
@@ -160,7 +145,7 @@ class RealConnection(
         http2Connection = null
         allocationLimit = 1
 
-        eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
+        eventListener.connectFailed(call, route.socketAddress,  null, e)
 
         if (routeException == null) {
           routeException = RouteException(e)
@@ -188,13 +173,12 @@ class RealConnection(
     call: Call,
     eventListener: EventListener
   ) {
-    val proxy = route.proxy
     val address = route.address
 
     val rawSocket =  address.socketFactory.createSocket()!!
     this.rawSocket = rawSocket
 
-    eventListener.connectStart(call, route.socketAddress, proxy)
+    eventListener.connectStart(call, route.socketAddress)
     rawSocket.soTimeout = readTimeout
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeout)
@@ -396,8 +380,6 @@ class RealConnection(
    */
   private fun routeMatchesAny(candidates: List<Route>): Boolean {
     return candidates.any {
-      it.proxy.type() == Proxy.Type.DIRECT &&
-          route.proxy.type() == Proxy.Type.DIRECT &&
           route.socketAddress == it.socketAddress
     }
   }
@@ -540,7 +522,6 @@ class RealConnection(
 
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
-        " proxy=${route.proxy}" +
         " hostAddress=${route.socketAddress}" +
         " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
         " protocol=$protocol}"

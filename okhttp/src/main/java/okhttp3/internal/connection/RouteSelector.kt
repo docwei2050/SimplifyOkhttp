@@ -70,7 +70,7 @@ class RouteSelector(
       // all the good routes will we attempt the postponed routes.
       val proxy = nextProxy()
       for (inetSocketAddress in inetSocketAddresses) {
-        val route = Route(address, proxy, inetSocketAddress)
+        val route = Route(address, inetSocketAddress)
         if (routeDatabase.shouldPostpone(route)) {
           postponedRoutes += route
         } else {

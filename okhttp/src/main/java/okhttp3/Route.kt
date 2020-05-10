@@ -39,7 +39,6 @@ class Route(
    * **Warning:** This may disagree with [Address.proxy] when it is null. When
    * the address's proxy is null, the proxy selector is used.
    */
-  @get:JvmName("proxy") val proxy: Proxy,
   @get:JvmName("socketAddress") val socketAddress: InetSocketAddress
 ) {
 
@@ -55,14 +54,12 @@ class Route(
   override fun equals(other: Any?): Boolean {
     return other is Route &&
         other.address == address &&
-        other.proxy == proxy &&
         other.socketAddress == socketAddress
   }
 
   override fun hashCode(): Int {
     var result = 17
     result = 31 * result + address.hashCode()
-    result = 31 * result + proxy.hashCode()
     result = 31 * result + socketAddress.hashCode()
     return result
   }

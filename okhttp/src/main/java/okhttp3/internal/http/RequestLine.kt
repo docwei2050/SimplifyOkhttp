@@ -27,10 +27,10 @@ object RequestLine {
    * [HttpURLConnection.getHeaderFields], so it needs to be set even if the transport is
    * HTTP/2.
    */
-  fun get(request: Request, proxyType: Proxy.Type) = buildString {
+  fun get(request: Request) = buildString {
     append(request.method)
     append(' ')
-    if (includeAuthorityInRequestLine(request, proxyType)) {
+    if (includeAuthorityInRequestLine(request)) {
       append(request.url)
     } else {
       append(requestPath(request.url))
@@ -42,8 +42,8 @@ object RequestLine {
    * Returns true if the request line should contain the full URL with host and port (like "GET
    * http://android.com/foo HTTP/1.1") or only the path (like "GET /foo HTTP/1.1").
    */
-  private fun includeAuthorityInRequestLine(request: Request, proxyType: Proxy.Type): Boolean {
-    return !request.isHttps && proxyType == Proxy.Type.HTTP
+  private fun includeAuthorityInRequestLine(request: Request): Boolean {
+    return request.isHttps
   }
 
   /**

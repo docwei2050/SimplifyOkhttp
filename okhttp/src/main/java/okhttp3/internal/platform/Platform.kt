@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.platform
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.internal.readFieldOrNull
@@ -72,13 +73,14 @@ open class Platform {
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
 
   open fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-        TrustManagerFactory.getDefaultAlgorithm())
+    val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
+    Log.e("okhttp",trustManagers.contentToString())
+    //返回的是一个根证书  android.security.net.config.RootTrustManager@1cb04e1
     return trustManagers[0] as X509TrustManager
   }
 
@@ -176,9 +178,6 @@ open class Platform {
     @JvmStatic
     fun get(): Platform = platform
 
-    fun resetForTests(platform: Platform = findPlatform()) {
-      this.platform = platform
-    }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
