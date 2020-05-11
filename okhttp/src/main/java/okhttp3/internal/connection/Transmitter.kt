@@ -158,8 +158,9 @@ class Transmitter(private val client: OkHttpClient, private val call: Call) {
                         "please call response.close()"
             }
         }
-
+        //在这里决定是走http1   还是http2.0
         val codec = exchangeFinder!!.find(client, chain, doExtensiveHealthChecks)
+        //最后封装成一个具体的Exchange
         val result = Exchange(this, call, eventListener, exchangeFinder!!, codec)
 
         synchronized(connectionPool) {

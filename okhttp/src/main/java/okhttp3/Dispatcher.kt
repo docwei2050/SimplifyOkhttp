@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import android.util.Log
 import okhttp3.RealCall.AsyncCall
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.threadFactory
@@ -92,6 +93,7 @@ class Dispatcher constructor() {
   val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
+        //可缓存的线程池，报货事件是60s,使用同步队列可以保证我们的任务迅速执行
         executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
             SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
       }
@@ -111,9 +113,10 @@ class Dispatcher constructor() {
   constructor(executorService: ExecutorService) : this() {
     this.executorServiceOrNull = executorService
   }
-  //多用于异步
+  //用于异步
   internal fun enqueue(call: AsyncCall) {
     synchronized(this) {
+      //等待队列准备好
       readyAsyncCalls.add(call)
 
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
@@ -128,6 +131,7 @@ class Dispatcher constructor() {
   }
 
   private fun findExistingCallWithHost(host: String): AsyncCall? {
+    //host相同，复用
     for (existingCall in runningAsyncCalls) {
       if (existingCall.host() == host) return existingCall
     }
@@ -167,10 +171,12 @@ class Dispatcher constructor() {
     val isRunning: Boolean
     synchronized(this) {
       val i = readyAsyncCalls.iterator()
+      //使用迭代器
       while (i.hasNext()) {
         val asyncCall = i.next()
 
         if (runningAsyncCalls.size >= this.maxRequests) break // Max capacity.
+       // Log.e("okhttp","asyncCall.callsPerHost().get()-->"+asyncCall.callsPerHost().get())
         if (asyncCall.callsPerHost().get() >= this.maxRequestsPerHost) continue // Host max capacity.
 
         i.remove()
@@ -180,7 +186,7 @@ class Dispatcher constructor() {
       }
       isRunning = runningCallsCount() > 0
     }
-
+    //Log.e("okhttp","size-->"+executableCalls.size)
     for (i in 0 until executableCalls.size) {
       val asyncCall = executableCalls[i]
       asyncCall.executeOn(executorService)
@@ -233,10 +239,4 @@ class Dispatcher constructor() {
 
   @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
 
-  @JvmName("-deprecated_executorService")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "executorService"),
-      level = DeprecationLevel.ERROR)
-  fun executorService(): ExecutorService = executorService
 }

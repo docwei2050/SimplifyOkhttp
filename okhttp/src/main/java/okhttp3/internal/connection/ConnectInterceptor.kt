@@ -32,6 +32,7 @@ object ConnectInterceptor : Interceptor {
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
     val doExtensiveHealthChecks = request.method != "GET"
+    //给transmitter创建一个Exchange，在创建Exchange时候需要ExchangeCodec，，
     val exchange = transmitter.newExchange(chain, doExtensiveHealthChecks)
 
     return realChain.proceed(request, transmitter, exchange)

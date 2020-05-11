@@ -48,6 +48,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
       }
 
       val contentLength = body.contentLength()
+      //content返回-1是正常的，表示后台返回的是不确定大小的数据，此时是使用Transfer-encoding
       if (contentLength != -1L) {
         requestBuilder.header("Content-Length", contentLength.toString())
         requestBuilder.removeHeader("Transfer-Encoding")

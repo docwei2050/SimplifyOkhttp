@@ -77,6 +77,7 @@ internal class RealCall private constructor(
     }
     //调用开始
     transmitter.callStart()
+    //调度器去调度
     client.dispatcher.enqueue(AsyncCall(responseCallback))
   }
 
@@ -94,10 +95,11 @@ internal class RealCall private constructor(
   internal inner class AsyncCall(
     private val responseCallback: Callback
   ) : Runnable {
+
     @Volatile private var callsPerHost = AtomicInteger(0)
 
     fun callsPerHost(): AtomicInteger = callsPerHost
-
+   //重用同一个host的话，需要采用原子操作的一些类
     fun reuseCallsPerHostFrom(other: AsyncCall) {
       this.callsPerHost = other.callsPerHost
     }
@@ -122,6 +124,7 @@ internal class RealCall private constructor(
       } catch (e: RejectedExecutionException) {
         val ioException = InterruptedIOException("executor rejected")
         ioException.initCause(e)
+        //失败了就把本次连接  给丢弃
         transmitter.noMoreExchanges(ioException)
         responseCallback.onFailure(this@RealCall, ioException)
       } finally {
@@ -220,6 +223,7 @@ internal class RealCall private constructor(
     fun newRealCall(client: OkHttpClient, originalRequest: Request, forWebSocket: Boolean): RealCall {
       // Safely publish the Call instance to the EventListener.
       return RealCall(client, originalRequest, forWebSocket).apply {
+        //给每一个call添加一个transmitter
         transmitter = Transmitter(client, this)
       }
     }

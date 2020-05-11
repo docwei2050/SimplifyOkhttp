@@ -76,6 +76,7 @@ class ExchangeFinder(
     val connectionRetryEnabled = client.retryOnConnectionFailure
 
     try {
+      //先确定连接才能确定对应的httpExchangeCodec
       val resultConnection = findHealthyConnection(
           connectTimeout = connectTimeout,
           readTimeout = readTimeout,
@@ -107,6 +108,7 @@ class ExchangeFinder(
     connectionRetryEnabled: Boolean,
     doExtensiveHealthChecks: Boolean
   ): RealConnection {
+    //while true 啊
     while (true) {
       val candidate = findConnection(
           connectTimeout = connectTimeout,
@@ -155,7 +157,7 @@ class ExchangeFinder(
       if (transmitter.isCanceled) throw IOException("Canceled")
       hasStreamFailure = false // This is a fresh attempt.
 
-      //
+      //先校验这个transmitter
       releasedConnection = transmitter.connection
       toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
         transmitter.releaseConnectionNoEvents()
@@ -171,6 +173,7 @@ class ExchangeFinder(
 
       if (result == null) {
         // Attempt to get a connection from the pool.
+        //先不不考虑多路复用的情况
         if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true
           result = transmitter.connection
@@ -182,6 +185,7 @@ class ExchangeFinder(
         }
       }
     }
+    //关闭这个无用的连接
     toClose?.closeQuietly()
 
     if (releasedConnection != null) {
@@ -195,6 +199,7 @@ class ExchangeFinder(
       return result!!
     }
 
+    //切换路由，去找连接
     // If we need a route selection, make one. This is a blocking operation.
     var newRouteSelection = false
     if (selectedRoute == null && (routeSelection == null || !routeSelection!!.hasNext())) {

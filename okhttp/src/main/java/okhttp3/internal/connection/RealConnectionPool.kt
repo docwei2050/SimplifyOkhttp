@@ -82,7 +82,7 @@ class RealConnectionPool(
     for (connection in connections) {
       //需要多路复用 但是连接不支持多路复用
       if (requireMultiplexed && !connection.isMultiplexed) continue
-      //连接host不一致
+      //连接host不一致 路由选择器重新去选择
       if (!connection.isEligible(address, routes)) continue
       //那就最后找到了合适的连接
       transmitter.acquireConnectionNoEvents(connection)
