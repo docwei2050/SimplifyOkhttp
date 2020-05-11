@@ -110,21 +110,19 @@ class MainActivity : AppCompatActivity() {
             .url("https://www.baidu.com/")
             .build()
 
-        for(i in 1..100){
-            client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.e("okhttp", e.message)
-                }
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("okhttp", e.message)
+            }
 
-                @Throws(IOException::class)
-                override fun onResponse(
-                    call: Call,
-                    response: okhttp3.Response
-                ) { //  Log.e("okhttp", "onResponse: " + response.body().toString());
-                    Log.e("okhttp", response.toString())
-                }
-            })
-        }
+            @Throws(IOException::class)
+            override fun onResponse(
+                call: Call,
+                response: okhttp3.Response
+            ) { //  Log.e("okhttp", "onResponse: " + response.body().toString());
+                Log.e("okhttp", response.toString())
+            }
+        })
         //jdk 8的语法 try 主要是用来解决流close
 
         /* val request: Request = Request.Builder()

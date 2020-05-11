@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.connection
 
+import android.util.Log
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route

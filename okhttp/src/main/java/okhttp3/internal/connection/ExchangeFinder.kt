@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import android.util.Log
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.EventListener
@@ -157,23 +158,14 @@ class ExchangeFinder(
       if (transmitter.isCanceled) throw IOException("Canceled")
       hasStreamFailure = false // This is a fresh attempt.
 
-      //先校验这个transmitter
-      releasedConnection = transmitter.connection
-      toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
-        transmitter.releaseConnectionNoEvents()
-      } else {
-        null
-      }
+      //先校验这个transmitter本身拥有的连接，，一般来说好像都是null
+      //实测这里也是空啊
 
-      if (transmitter.connection != null) {
-        // We had an already-allocated connection and it's good.
-        result = transmitter.connection
-        releasedConnection = null
-      }
 
       if (result == null) {
         // Attempt to get a connection from the pool.
         //先不不考虑多路复用的情况
+        //http 1.1下 又被这个判断给拦死了connection.isEligible(address, routes) 被这个给 transmitters.size >= allocationLimit
         if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true
           result = transmitter.connection
@@ -185,25 +177,17 @@ class ExchangeFinder(
         }
       }
     }
-    //关闭这个无用的连接
-    toClose?.closeQuietly()
-
-    if (releasedConnection != null) {
-      eventListener.connectionReleased(call, releasedConnection!!)
-    }
-    if (foundPooledConnection) {
-      eventListener.connectionAcquired(call, result!!)
-    }
     if (result != null) {
       // If we found an already-allocated or pooled connection, we're done.
       return result!!
     }
 
-    //切换路由，去找连接
+    //切换路由，去找合适的连接
     // If we need a route selection, make one. This is a blocking operation.
     var newRouteSelection = false
     if (selectedRoute == null && (routeSelection == null || !routeSelection!!.hasNext())) {
       newRouteSelection = true
+      //一个next方法就可以拿到所有备选的route
       routeSelection = routeSelector.next()
     }
 
@@ -241,14 +225,14 @@ class ExchangeFinder(
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
-    //复用连接池中的连接，还要重新进行Tls
+    //重新进行Tls
     result!!.connect(connectTimeout, readTimeout, writeTimeout,
         pingIntervalMillis,
         connectionRetryEnabled,
         call,
         eventListener
     )
-    //记录成功的连接
+    //记录成功的连接 从失败的路由库中删除这个路由
     connectionPool.routeDatabase.connected(result!!.route())
 
 
@@ -258,9 +242,11 @@ class ExchangeFinder(
       connectingConnection = null
       // Last attempt at connection coalescing, which only occurs if we attempted multiple
       // concurrent connections to the same host.
+      //http 1.1下 又被这个判断给拦死了    requireMultiplexed && !connection.isMultiplexed
       if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) {
         // We lost the race! Close the connection we created and return the pooled connection.
-        result!!.noNewExchanges = true
+        //绑定这个transmitter   跟    realConnection
+        result!!.noNewExchanges = true  //标记这个realConnection不能被其他的tranmistter用了
         socket = result!!.socket()
         result = transmitter.connection
 
@@ -268,7 +254,9 @@ class ExchangeFinder(
         // that case we will retry the route we just successfully connected with.
         nextRouteToTry = selectedRoute
       } else {
+        //连接池中加入这个连接
         connectionPool.put(result!!)
+        //连接跟transmitter进行相互绑定
         transmitter.acquireConnectionNoEvents(result!!)
       }
     }

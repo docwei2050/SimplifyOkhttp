@@ -334,6 +334,7 @@ class RealConnection(
     internal fun isEligible(address: Address, routes: List<Route>?): Boolean {
         // If this connection is not accepting new exchanges, we're done.
         //如果请求数量 大于 流数量限制
+        //怎么能复用，复用个毛线，，，http1.1的时候一个RealConnection是带有一个transmitters 其size=1.
         if (transmitters.size >= allocationLimit || noNewExchanges) return false
 
         //比较需要host&&端口一致，，，，，，，，，，，，，，，，，
@@ -396,10 +397,8 @@ class RealConnection(
             return true // Host match. The URL is supported.
         }
         // We have a host mismatch. But if the certificate matches, we're still good.
-        return handshake != null && OkHostnameVerifier.verify(
-            url.host,
-            handshake!!.peerCertificates[0] as X509Certificate
-        )
+        //握手的证书一定是服务端发过来的证书
+        return handshake != null && OkHostnameVerifier.verify(url.host,handshake!!.peerCertificates[0] as X509Certificate)
 
     }
 

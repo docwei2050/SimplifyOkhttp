@@ -48,6 +48,7 @@ class Handshake internal constructor(
   peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
+  //服务端发过来的证书
   @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy(
       peerCertificatesFn)
 

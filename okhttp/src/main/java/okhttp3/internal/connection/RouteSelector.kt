@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import android.util.Log
 import okhttp3.*
 import okhttp3.EventListener
 import okhttp3.internal.immutableListOf
@@ -29,12 +30,7 @@ import java.util.*
  * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
  * IP address, and TLS mode. Connections may also be recycled.
  */
-class RouteSelector(
-    private val address: Address,
-    private val routeDatabase: RouteDatabase,
-    private val call: Call,
-    private val eventListener: EventListener
-) {
+class RouteSelector(private val address: Address, private val routeDatabase: RouteDatabase, private val call: Call, private val eventListener: EventListener) {
     /* State for negotiating the next proxy to use. */
     private var proxies = emptyList<Proxy>()
     private var nextProxyIndex: Int = 0
@@ -67,6 +63,7 @@ class RouteSelector(
             val proxy = nextProxy()
             for (inetSocketAddress in inetSocketAddresses) {
                 val route = Route(address, inetSocketAddress)
+                //要延迟    因为其是失败的
                 if (routeDatabase.shouldPostpone(route)) {
                     postponedRoutes += route
                 } else {
@@ -78,7 +75,7 @@ class RouteSelector(
                 break
             }
         }
-
+        //如果可用的路由没有，那就只能拿之前有问题的再试试看看
         if (routes.isEmpty()) {
             // We've exhausted all Proxies so fallback to the postponed routes.
             routes += postponedRoutes
@@ -91,12 +88,14 @@ class RouteSelector(
     /** Prepares the proxy servers to try. */
     private fun resetNextProxy(url: HttpUrl) {
         eventListener.proxySelectStart(call, url)
+        //不走代理的情形
         proxies = immutableListOf(Proxy.NO_PROXY)
         nextProxyIndex = 0
         eventListener.proxySelectEnd(call, url, proxies)
     }
 
     /** Returns true if there's another proxy to try. */
+
     private fun hasNextProxy(): Boolean = nextProxyIndex < proxies.size
 
     /** Returns the next proxy to try. May be PROXY.NO_PROXY but never null. */
@@ -107,6 +106,7 @@ class RouteSelector(
                 "No route to ${address.url.host}; exhausted proxy configurations: $proxies"
             )
         }
+        //
         val result = proxies[nextProxyIndex++]
         resetNextInetSocketAddress(result)
         return result
@@ -132,6 +132,10 @@ class RouteSelector(
         }
         eventListener.dnsEnd(call, socketHost, addresses)
         for (inetAddress in addresses) {
+            Log.e("okhttp","address via dns "+inetAddress+"----"+socketHost)
+            //address via dns www.baidu.com/182.61.200.7
+            //address via dns www.baidu.com/182.61.200.6
+
             mutableInetSocketAddresses += InetSocketAddress(inetAddress, socketPort)
         }
 
@@ -145,6 +149,10 @@ class RouteSelector(
 
         operator fun next(): Route {
             if (!hasNext()) throw NoSuchElementException()
+            //Route{www.baidu.com/182.61.200.6:443}
+            Log.e("okhttp","address via dns "+routes[nextRouteIndex])
+            Log.e("okhttp","address via dns "+routes[nextRouteIndex].address) //www.baidu.com:443
+            Log.e("okhttp","address via dns "+routes[nextRouteIndex].socketAddress) //www.baidu.com/182.61.200.6:443
             return routes[nextRouteIndex++]
         }
     }
