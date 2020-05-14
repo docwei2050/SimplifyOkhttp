@@ -64,6 +64,7 @@ internal class RealCall private constructor(
     transmitter.callStart()
     try {
       client.dispatcher.executed(this)
+      //同步直接就去调用这个？？？
       return getResponseWithInterceptorChain()
     } finally {
       client.dispatcher.finished(this)

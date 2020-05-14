@@ -216,7 +216,7 @@ class RealConnection(
         eventListener.secureConnectEnd(call, handshake)
         //开始发送请求
         if (protocol === Protocol.HTTP_2) {
-          //tls建立之后就开始http
+            //tls建立之后就开始http
             startHttp2(pingIntervalMillis)
         }
     }
@@ -260,7 +260,6 @@ class RealConnection(
             if (connectionSpec.supportsTlsExtensions) {
                 Platform.get().configureTlsExtensions(sslSocket, address.protocols)
             }
-
             // Force handshake. This can throw!
             //强制握手
             sslSocket.startHandshake()
@@ -307,6 +306,10 @@ class RealConnection(
             // Success! Save the handshake and the ALPN protocol
             // 没出现问题就算成功了啊.
             val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {
+                Log.e(
+                    "okhttp",
+                    "selectProtocol--->" + Platform.get().getSelectedProtocol(sslSocket)
+                )
                 Platform.get().getSelectedProtocol(sslSocket)
             } else {
                 null
@@ -381,7 +384,10 @@ class RealConnection(
      */
     private fun routeMatchesAny(candidates: List<Route>): Boolean {
         return candidates.any {
-            Log.e("okttp", "route.socketAddress-->" + route.socketAddress + "-----" + it.socketAddress)
+            Log.e(
+                "okttp",
+                "route.socketAddress-->" + route.socketAddress + "-----" + it.socketAddress
+            )
             route.socketAddress == it.socketAddress
         }
     }
@@ -398,7 +404,10 @@ class RealConnection(
         }
         // We have a host mismatch. But if the certificate matches, we're still good.
         //握手的证书一定是服务端发过来的证书
-        return handshake != null && OkHostnameVerifier.verify(url.host,handshake!!.peerCertificates[0] as X509Certificate)
+        return handshake != null && OkHostnameVerifier.verify(
+            url.host,
+            handshake!!.peerCertificates[0] as X509Certificate
+        )
 
     }
 
@@ -412,7 +421,7 @@ class RealConnection(
         return if (http2Connection != null) {
             Http2ExchangeCodec(client, this, chain, http2Connection)
         } else {
-          //读超时是给socket设置的
+            //读超时是给socket设置的
             socket.soTimeout = chain.readTimeoutMillis()
             source.timeout().timeout(chain.readTimeoutMillis().toLong(), MILLISECONDS)
             sink.timeout().timeout(chain.writeTimeoutMillis().toLong(), MILLISECONDS)
@@ -448,7 +457,7 @@ class RealConnection(
                 val readTimeout = socket.soTimeout
                 try {
                     socket.soTimeout = 1
-                  //连接所具备的source不能被耗尽。
+                    //连接所具备的source不能被耗尽。
                     return !source.exhausted()
                 } finally {
                     socket.soTimeout = readTimeout

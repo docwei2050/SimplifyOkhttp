@@ -61,6 +61,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     var priorResponse: Response? = null
     while (true) {
       //一个Transmitter对一个一个ExchangeFinder，帮忙去找RealConnection
+      //还没有真正去找连接
       transmitter.prepareToConnect(request)
 
       if (transmitter.isCanceled) {

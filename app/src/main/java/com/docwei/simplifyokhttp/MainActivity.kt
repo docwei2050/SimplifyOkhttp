@@ -107,7 +107,8 @@ class MainActivity : AppCompatActivity() {
 
     fun click(view: View) {
         val request: Request = Request.Builder()
-            .url("https://www.baidu.com/")
+            .url("https://www.httpbin.org/post")
+            .post(RequestBody.)
             .build()
 
         client.newCall(request).enqueue(object : Callback {

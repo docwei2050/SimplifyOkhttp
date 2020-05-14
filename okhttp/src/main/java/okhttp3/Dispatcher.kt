@@ -93,7 +93,7 @@ class Dispatcher constructor() {
   val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
-        //可缓存的线程池，报货事件是60s,使用同步队列可以保证我们的任务迅速执行
+        //可缓存的线程池，保活时间是60s,使用同步队列可以保证我们的任务迅速执行
         executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
             SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
       }
@@ -164,6 +164,7 @@ class Dispatcher constructor() {
    *
    * @return true if the dispatcher is currently running calls.
    */
+  //只处理了异步的请求
   private fun promoteAndExecute(): Boolean {
     this.assertThreadDoesntHoldLock()
 
